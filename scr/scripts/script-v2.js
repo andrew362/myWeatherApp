@@ -69,6 +69,7 @@ function ajax(method, url){
                     status: this.status,
                     statusText: xhr.statusText
                 });
+                alert(this.statusText);
             }
         }
         xhr.send();
@@ -116,12 +117,12 @@ function addTolocalStorageTempBox(data, timeStamp){
         list: data.list
     };
     localStorageTempBox.dataArray.push(tempObj);
-    console.log(localStorageTempBox.dataArray);
+    //console.log(localStorageTempBox.dataArray);
 }
 
 function readDataFromLocalStorage(data) { 
     try {
-        console.log(data);
+        //console.log(data);
         data.forEach(function(elem){
             addDataToForm(elem, elem.id);    
         });
@@ -207,19 +208,36 @@ function insertDataLabel(data, obj, id) {
         if (el.id == formDataID) {
             el.list.forEach(function(id) {
                 let num = Number(id[param1]) * 1000;
-                //console.log(num);
                 let date = new Date(num);
+                //console.log(date);
                 let splitDate = date.toString().split(' ');
-                let shortDate = splitDate[2] +'-'+ splitDate[1] +'\n'+ splitDate[4] ;
+                let shortDate = splitDate[0] +' '+ splitDate[2] +'-'+ splitDate[1] +'\n'+ splitDate[4] ;
                 array.push(shortDate);
             });
         }
     });
-    console.log(array);
+    //console.log(array);
     return array;
 }
 
 
+//--------------------------------- reload data-------------------------
 
 
-//insertDataLabel(localStorageTempBox.dataArray, typeOfWeatherData.date);
+
+
+document.getElementById('refreshBtn').addEventListener('click', refreshData);
+
+function refreshData() {
+    localStorage.clear();
+    let node = document.getElementById('mainContent');
+    while (node.hasChildNodes()) node.removeChild(node.lastChild);
+    let cityNameList = localStorageTempBox.dataArray.map(function(el){
+        return el.city.name;
+    });
+    console.log(cityNameList);
+    localStorageTempBox = {dataArray:[]};
+    cityNameList.forEach(function(cityName){
+    ajax('GET', requestURL(cityName), true);
+});
+}
