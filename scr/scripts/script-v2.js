@@ -1,12 +1,21 @@
 const openWeatherMapKey = "63114ede4fe9d0ef94dc19e2f6f43270";
 const mainContent = document.getElementById('mainContent');
 const formInput = document.getElementById('formInput');
+const submitBtn = document.getElementById('submitBtn');
 let localStorageTempBox = JSON.parse(localStorage.getItem('myWeatherApp')) || {dataArray:[]};
-//let formDataID = '1526502453792';
+console.log(localStorageTempBox);
 const typeOfWeatherData = {
     temp: {
         param1: 'main',
         param2: 'temp'
+    },
+    temp_max: {
+        param1: 'main',
+        param2: 'temp_max'
+    },
+    temp_min: {
+        param1: 'main',
+        param2: 'temp_min'
     },
     pressure: {
         param1: 'main',
@@ -21,19 +30,54 @@ const typeOfWeatherData = {
     }
 }
 
-//console.log('odczyt z localStorage', localStorageTempBox);
+function loadData(url, button) {
+    button.classList.add('elem-is-busy');
+    button.disable = true;
+
+    ajax(url)
+    .then(function(res) {
+           let data = JSON.parse(res);
+           console.log(data);
+           let timeStamp = new Date().getTime();
+           let tempBox = {
+               data: data,
+               timeStamp: timeStamp
+           }
+           return tempBox
+    })
+    .then(function(tempBox){
+        addTolocalStorageTempBox(tempBox.data,tempBox.timeStamp);
+        return tempBox
+    })
+    .then(function(tempBox){
+        //dodawanie danych do formularza
+        addDataToForm(tempBox.data,tempBox.timeStamp);
+        
+    })
+    .then(function(){
+        setTimeout(function(){
+            button.classList.remove('elem-is-busy');
+            button.disable = false;
+        },400); 
+    })
+    .catch(function(err) {
+        console.error('Coś poszło nie tak');
+    })
+    
+}
 
 document.addEventListener('keypress', function(e){
     var keycode = (e.keyCode ? e.keyCode : e.which);
     if (keycode == '13') getWeatherData();
 });
 
-document.getElementById('submitBtn').addEventListener('click', getWeatherData);
+submitBtn.addEventListener('click', getWeatherData);
 
 function getWeatherData() {
     let input = formInput.value.trim();
+    let button = submitBtn;
     if (input) {
-        ajax('GET', requestURL(input), true);
+        loadData(requestURL(input), button);
     }
     formInput.value = "";
 }
@@ -41,29 +85,20 @@ function getWeatherData() {
 function requestURL(cityName) {
     return "http://api.openweathermap.org/data/2.5/forecast?q=" +
         cityName +
-        ",pl" +
+       // ",pl" +
         "&units=metric" 
         + "&type=accurate"
         + "&lang=pl"
         + "&APPID=" + openWeatherMapKey;
 }
 
-function ajax(method, url){
-     new Promise(function(resolve, reject){
+function ajax(url){
+    return new Promise(function(resolve, reject){
         const xhr = new XMLHttpRequest();
-        xhr.open(method, url);
+        xhr.open("GET", url);
         xhr.onload = function(){
-            if (this.status === 200) {
+            if (this.status === 200 && this.statusText == "OK") {
                 resolve(xhr.response);
-                let data = JSON.parse(xhr.response);
-                
-                let timeStamp = new Date().getTime();
-                //dodawanie danych do localStorage
-                addTolocalStorageTempBox(data,timeStamp);
-                //dodawanie danych do formularza
-                addDataToForm(data,timeStamp);
-
-                console.log(timeStamp, data);
             } else {
                 reject({
                     status: this.status,
@@ -117,7 +152,6 @@ function addTolocalStorageTempBox(data, timeStamp){
         list: data.list
     };
     localStorageTempBox.dataArray.push(tempObj);
-    //console.log(localStorageTempBox.dataArray);
 }
 
 function readDataFromLocalStorage(data) { 
@@ -152,32 +186,76 @@ window.onbeforeunload = function(){
     localStorage.setItem("myWeatherApp", JSON.stringify(localStorageTempBox));
 }
 
-
 //--------------------------------- charts-------------------------
 
 function createChart(timeStamp){
     //console.log('posycja',timeStamp);
      var ctx = document.getElementById("myChart-" + timeStamp).getContext('2d');
             var myChart = new Chart(ctx, {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: insertDataLabel(localStorageTempBox.dataArray, typeOfWeatherData.date, timeStamp),
                     datasets: [{
-                        label: '# of Votes',
+                        label: 'Rain',
+                        data: insertWeatherData(localStorageTempBox.dataArray, typeOfWeatherData.rain, timeStamp),
+                        backgroundColor: 'rgba(0, 99, 132, 0.2)',
+                        borderColor: 'rgba(0,99,132,1)',
+                        borderWidth: 1,
+                        yAxisID: 'y-axis-2',
+                        ticks: {min: 0}
+                    },{
+                        label: 'Temperature',
                         data: insertWeatherData(localStorageTempBox.dataArray, typeOfWeatherData.temp, timeStamp),
                         backgroundColor: 'rgba(0, 99, 132, 0.2)',
                         borderColor: 'rgba(0,99,132,1)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        type: 'line',
+                        yAxisID: 'y-axis-1',
+                        
                     }]
                 },
                 options: {
                     scales: {
                         yAxes: [{
-                            ticks: {
-                                beginAtZero:true
+                            type: 'linear', // only linear but allow scale type registration. This allows extensions to exist solely for log scale for instance
+							display: true,
+							position: 'right',
+                            id: 'y-axis-2',
+                            ticks:{
+                                min: 0
+                            },
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Value'
                             }
-                        }]
-                    }
+                            },{
+                            type: 'linear', // only linear but allow scale type registration. This allows extensions to exist solely for log scale for instance
+							display: true,
+							position: 'left',
+							id: 'y-axis-1',
+                            
+                        }],
+                        xAxes: [{
+       
+                        }],
+                    },
+                    animation: {
+                            duration: 400, // general animation time
+                    },
+                    responsiveAnimationDuration: 400, // animation duration after a resize
+                    
+                    responsive: true,
+     
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    },
+   
+                        
                 }
             });
         
@@ -220,7 +298,6 @@ function insertDataLabel(data, obj, id) {
     return array;
 }
 
-
 //--------------------------------- reload data-------------------------
 
 
@@ -230,6 +307,7 @@ document.getElementById('refreshBtn').addEventListener('click', refreshData);
 
 function refreshData() {
     localStorage.clear();
+    let button = this;
     let node = document.getElementById('mainContent');
     while (node.hasChildNodes()) node.removeChild(node.lastChild);
     let cityNameList = localStorageTempBox.dataArray.map(function(el){
@@ -237,7 +315,8 @@ function refreshData() {
     });
     console.log(cityNameList);
     localStorageTempBox = {dataArray:[]};
-    cityNameList.forEach(function(cityName){
-    ajax('GET', requestURL(cityName), true);
-});
+    cityNameList.forEach(async function(cityName){
+        await loadData(requestURL(cityName), button);
+    });
 }
+
