@@ -14,16 +14,23 @@
 
 <body>
     <section class="container-fluid">
-    <div id="mapid" style="height: 200px"></div>     
+    <div id="mapid">
+        <div class="bntOnMap">
+            <div id="resizeMap" class="btn btn-primary"><img src="img/arrow_down.svg"></div>
+        </div>
+    </div> 
+
+    
+     
 
         <div id='myApp' class="container">
-            <div class="row">
-                <div class="col">
-                    <input type="text" class="form-control" name="cityName" id="formInput" placeholder="Nazwa miasta">
+            <div class="row navigation">
+                <div class="col-12 d-flex justify-content-center">
+                     <input type="text" class="form-control w-50 " name="cityName" id="formInput" placeholder="Nazwa miasta">
                 </div>
-                <div class="col">
-                    <button id="submitBtn" class="btn btnPrimary ">Dodaj</button>
-                    <button id="refreshBtn" class="btn btnSecondary">Odśwież</button>
+                <div class="col-12 d-flex justify-content-center mt-2">
+                    <button id="submitBtn" class="btn btn-primary mr-3">Dodaj</button>
+                    <button id="refreshBtn" class="btn btn-secondary">Odśwież</button>
                 </div>
             </div>
 
@@ -34,10 +41,10 @@
                         <p>#</p>
                     </dvi>
                     <div class="col col_2">
-                        <p>Miasto</p>
+                        <p>#</p>
                     </div>
                     <div class="col col_3">
-                        <p>Średnia prognozowana temperatura</p>
+                        <p>#</p>
                     </div>
                     <div class="col col_4">
                     </div>
