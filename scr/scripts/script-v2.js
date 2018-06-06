@@ -2,8 +2,8 @@ const openWeatherMapKey = "63114ede4fe9d0ef94dc19e2f6f43270";
 const mainContent = document.getElementById('mainContent');
 const formInput = document.getElementById('formInput');
 const submitBtn = document.getElementById('submitBtn');
+const refreshBtn = document.getElementById('refreshBtn');
 let mapMarker = {};
-let mapMarkerFlag = false;
 let localStorageTempBox = JSON.parse(localStorage.getItem('myWeatherApp')) || { dataArray: [] };
 console.log(localStorageTempBox);
 
@@ -1025,6 +1025,7 @@ function loadData(url, button = submitBtn ) {
                 data: data,
                 timeStamp: timeStamp
             }
+            //console.log(tempBox);
             return tempBox
         })
         .then(function (tempBox) {
@@ -1035,9 +1036,8 @@ function loadData(url, button = submitBtn ) {
             //dodawanie danych do formularza
             console.log(tempBox.data);
             addDataToForm(tempBox.data, tempBox.timeStamp);
-            if (mapMarkerFlag) {
-                addNewMarkerOnMap(tempBox.data.city.coord.lat,tempBox.data.city.coord.lon)
-            }
+            addNewMarkerOnMap(tempBox.data.city.coord.lat,tempBox.data.city.coord.lon)
+            
         })
         .catch(function (err) {
             console.error('Coś poszło nie tak', err);
@@ -1513,21 +1513,60 @@ function insertDataLabel(data, obj, id) {
 
 
 
-document.getElementById('refreshBtn').addEventListener('click', refreshData);
+refreshBtn.addEventListener('click', refreshData);
 
 function refreshData() {
     localStorage.clear();
+    refreshBtn.classList.add('elem-is-busy');
+    refreshBtn.disable = true;
+
     let button = this;
     let node = document.getElementById('mainContent');
     while (node.hasChildNodes()) node.removeChild(node.lastChild);
     let cityNameList = localStorageTempBox.dataArray.map(function (el) {
         return el.city.name;
     });
-    console.log(cityNameList);
+    //oproznianie listy pomocniczej
     localStorageTempBox = { dataArray: [] };
-    cityNameList.forEach(async function (cityName) {
-        await loadData(requestURLbyCityName(cityName), button);
+
+    let promises = [];
+    for(city of cityNameList){
+        promises.push(fetchData(city));
+        //console.log(promises);
+    }
+
+    Promise.all(promises)
+    .then(results => {
+        for (result of results){
+            let timeStamp = new Date().getTime();
+            let tempBox = {
+                data: result,
+                timeStamp: timeStamp
+        }
+        //console.log(tempBox);
+        addTolocalStorageTempBox(tempBox.data, tempBox.timeStamp);
+        addDataToForm(tempBox.data, tempBox.timeStamp);
+    }
+    })
+    .catch(err => console.log(err))
+    .finally(function() {
+        setTimeout(function () {
+            refreshBtn.classList.remove('elem-is-busy');
+            refreshBtn.disable = false;
+        }, 400);
+       
     });
+    
+    async function fetchData(cityName) {
+        try{
+            let response = await fetch(requestURLbyCityName(cityName));
+            let json1 = await response.json();
+            //console.log(json1);
+            return json1
+        } catch (err){
+            console.error(err);
+        }
+    };
 }
 
 
