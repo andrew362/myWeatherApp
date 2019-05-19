@@ -1063,7 +1063,7 @@ function getWeatherData() {
 }
 
 function requestURLbyCityName(cityName) {
-    return "http://api.openweathermap.org/data/2.5/forecast?q=" +
+    return "https://api.openweathermap.org/data/2.5/forecast?q=" +
         cityName +
         "&units=metric" +
         "&type=accurate" +
@@ -1072,7 +1072,7 @@ function requestURLbyCityName(cityName) {
 }
 
 function requestURLbyCoord(lat, lgn) {
-    return "http://api.openweathermap.org/data/2.5/forecast?" +
+    return "https://api.openweathermap.org/data/2.5/forecast?" +
         "lat=" + lat +
         "&lon=" + lgn +
         "&units=metric" +
